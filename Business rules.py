@@ -133,19 +133,6 @@ def sorteer_data_content(cursor, profiel_id):
     #return profiel_id en 4 random producten ID's uit de lijst met vergelijkbare producten uit die categorie
     return profiel_id, random.sample(product_idx, 4)
 
-def data_storten(tomaat, profile, list_value, connectie, cursor, table, *column):
-    """
-    Connect aan de database en loop door de verschillende waardes in de list en voeg ze die dan toe aan de table collums.
-    Execute deze command en commit het naar de sql database.
-    :param direction:, :param profile, :param list_value:, :param db:, :param cursor:, :param table:, :param *column:, :return:,
-    """
-
-    if tomaat == 0:
-        sql_list = "INSERT IGNORE INTO " + table + " ("+column[0]+", "+column[1]+","+column[2]+","+column[3]+", "+column[4] +") VALUES (%, %, %, %, %)"
-        sorteren = (str(profile), str(list_value[0]), str(list_value[1]), str(list_value[2]), str(list_value[3]))
-        cursor.execute(sql_list, sorteren)
-        connectie.commit()
-
 def recommendation_engine():
     """
     Deze functie zet alles op gang & timed het process
