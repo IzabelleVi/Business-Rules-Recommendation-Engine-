@@ -67,7 +67,7 @@ def data_ophalen_uit_database(cursor, profiel_id):
     :param cursor, profiel_id
     """
 
-    cursor.execute("SELECT products.id, products.price, products.stock, orders.aantal, main_category.id, brand.brand, gender.id, doelgroep.id, orders.sessions_id_key, sessions.profiles_id_key FROM `products`, `gender`, `brand`, `main_category`, `orders`, `sessions`, `doelgroep` WHERE products.gender_id_key = gender.id AND products.brand_id_key = brand.id AND products.main_category_id_key = main_category.id AND orders.products_id_key = products.id AND orders.sessions_id_key = sessions.id AND products.doelgroep_id_key = doelgroep.id AND profiles_id_key = '%s'" % profiel_id)
+    cursor.execute("SELECT products.id,products.price,products.stock,main_category.id,orders.aantal,brand.brand,gender.id,orders.sessions_id_key,doelgroep.id,sessions.profiles_id_key FROM `products`,`brand`,`gender`,`orders`,`main_category`,`sessions`,`doelgroep` WHERE products.gender_id_key = gender.id AND products.main_category_id_key = main_category.id AND products.brand_id_key = brand.id AND orders.products_id_key = products.id AND products.doelgroep_id_key = doelgroep.id AND orders.sessions_id_key = sessions.id AND profiles_id_key = '%s'" % profiel_id)
     profiel_data = cursor.fetchall()
 
     return profiel_data
@@ -91,11 +91,11 @@ def sorteer_data_collaborative(cursor, profiel_id):
     # Ophalen van de specifieke data die we nodig hebben voor deze recommendation, en toevoegen aan een list. In dit
     # geval van alle categorieen, gender = vrouwen, en als doelgroep specifiek weer vrouwen.
     for i in profiel_data:
-        cursor.execute("SELECT products.id, products.main_category_id_key, products.gender_id_key, products.doelgroep_id_key, sessions.profiles_id_key FROM `products`, `orders`, `sessions`, `profiles` WHERE orders.products_id_key = products.id AND orders.sessions_id_key = sessions.id AND sessions.profiles_id_key = profiles.id AND main_category_id_key = '{0}' AND gender_id_key = '{12}' AND doelgroep_id_key = '{16}'".format(i[4], i[6], i[7]))
+        cursor.execute("SELECT products.id,products.gender_id_key,products.main_category_id_key,products.doelgroep_id_key,sessions.profiles_id_key FROM `products`,`orders`,`profiles`,`sessions` WHERE orders.products_id_key = products.id AND sessions.profiles_id_key = profiles.id AND orders.sessions_id_key = sessions.id AND main_category_id_key = '{0}' AND gender_id_key = '{12}' AND doelgroep_id_key = '{16}'".format(i[4], i[6], i[7]))
         manderijn = cursor.fetchall()
 
-    for i in manderijn:
-        profiel_idx.append(i[4])
+        for i in manderijn:
+            profiel_idx.append(i[4])
 
     # alle data ophalen van een random profiel dat vergelijkbaar is met de profielen uit onze mandarijn list. (Ik ben een mandarijntje aan het eten vandaar de naam)
     cursor.execute("SELECT products.id, products.price, products.stock, orders.aantal, main_category.id, brand.brand, gender.id, doelgroep.id, orders.sessions_id_key, sessions.profiles_id_key FROM `products`, `gender`, `brand`, `main_category`, `orders`, `sessions`, `doelgroep` WHERE products.gender_id_key = gender.id AND products.brand_id_key = brand.id AND products.main_category_id_key = main_category.id AND orders.products_id_key = products.id AND orders.sessions_id_key = sessions.id AND products.doelgroep_id_key = doelgroep.id AND profiles_id_key = '%s'" % ''.join(random.sample(profiel_idx, 1)))
@@ -133,6 +133,21 @@ def sorteer_data_content(cursor, profiel_id):
     #return profiel_id en 4 random producten ID's uit de lijst met vergelijkbare producten uit die categorie
     return profiel_id, random.sample(product_idx, 4)
 
+def data_storten(profiel, waarde, connectie, cursor, tabel, *rij):
+    """
+    Connect aan de database en loop door de verschillende waardes in de list en voeg ze die dan toe aan de table collums.
+    Execute deze command en commit het naar de sql database.
+    :param direction:, :param profile, :param list_value:, :param db:, :param cursor:, :param table:, :param *column:, :return:,
+    """
+    tomaat = True
+
+    while tomaat:
+        nieuwe_tabel = "INSERT IGNORE INTO " + tabel + " ("+[0]+", "+rij[1]+","+rij[2]+","+rij[3]+", "+rij[4] +") VALUES (%, %, %, %, %)"
+        sorteren = (str(profiel), str(waarde[0]), str(waarde[1]), str(waarde[2]), str(waarde[3]))
+        cursor.execute(nieuwe_tabel, sorteren)
+        connectie.commit()
+        tomaat = False
+
 def recommendation_engine():
     """
     Deze functie zet alles op gang & timed het process
@@ -146,11 +161,11 @@ def recommendation_engine():
     maak_tabellen_aan(cursor)
 
 
-    profiel_vergelijking, recommendation_vergelijking = sorteer_data_collaborative( cursor)
-    data_storten(0, profiel_vergelijking, recommendation_vergelijking, connectie, cursor, "collaborative_filtering", "id", "product1", "product2", "product3", "product4")
+    vegelijking1, vergelijking2 = sorteer_data_collaborative( cursor, 'root')
+    data_storten(vergelijking1, vergelijking2, connectie, cursor, "collaborative","product_id","product1","product2", "product3","product4")
 
-    profiel_content, recommendation_content = sorteer_data_content(cursor, '5a3e2f8ba82561000176c70a')
-    data_storten(0, profiel_content, recommendation_content, connectie, cursor, "content_filtering", "id", "product1", "product2", "product3", "product4")
+    vergelijking3, vergelijking4 = sorteer_data_content(cursor, 'root')
+    data_storten(vergelijking3, vergelijking4, connectie, cursor, "content", "product_id", "product1", "product2", "product3", "product4")
 
     database_sluiten(connectie, cursor)
     eind = time.time()
