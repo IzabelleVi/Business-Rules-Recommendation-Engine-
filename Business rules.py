@@ -146,7 +146,7 @@ def recommendation_engine():
     maak_tabellen_aan(cursor)
 
 
-    profiel_vergelijking, recommendation_vergelijking = sorteer_data_collaborative( cursor, '5a3e2f8ba82561000176c70a')
+    profiel_vergelijking, recommendation_vergelijking = sorteer_data_collaborative( cursor)
     data_storten(0, profiel_vergelijking, recommendation_vergelijking, connectie, cursor, "collaborative_filtering", "id", "product1", "product2", "product3", "product4")
 
     profiel_content, recommendation_content = sorteer_data_content(cursor, '5a3e2f8ba82561000176c70a')
